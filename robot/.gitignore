@@ -1,0 +1,5 @@
+# Build directories
+.build_Debug
+.settings
+bin
+
