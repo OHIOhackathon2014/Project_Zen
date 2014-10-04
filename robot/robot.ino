@@ -57,9 +57,7 @@ void loop() {
       }
 
       // Determine the speed
-      //TODO: Should be command & SPEED_MASK?
       uint8_t spd = command & SPEED_MASK;
-      //TODO: This line creates a quadratic releationship between what should be linear speed values. It would be better to multiply by a constant.
       if (spd == 16) {
         spd = 256;
       } else {
@@ -74,7 +72,7 @@ void loop() {
             case 0:
               // Negative direction
               analogWrite(motor_x[1], spd);
-              digitalWrite(motor_x[1], HIGH);
+              digitalWrite(motor_x[0], LOW);
               break;
             case 1:
               // Positive direction
@@ -89,7 +87,7 @@ void loop() {
             case 0:
               // Negative direction
               analogWrite(motor_y[1], spd);
-              digitalWrite(motor_y[1], HIGH);
+              digitalWrite(motor_y[0], LOW);
               break;
             case 1:
               // Positive direction
