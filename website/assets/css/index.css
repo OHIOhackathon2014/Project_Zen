@@ -69,3 +69,16 @@ video {
 .container .text-muted {
   margin-top: 20px;
 }
+
+#overlay {
+    z-index: 1;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: inherit;
+    height: inherit;
+}
+
+body div.container {
+    position: relative;
+}
