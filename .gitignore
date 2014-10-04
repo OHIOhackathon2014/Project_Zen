@@ -33,3 +33,5 @@
 # FFmpeg create fiels
 *.ffm
 
+# Vim Backups
+*~
