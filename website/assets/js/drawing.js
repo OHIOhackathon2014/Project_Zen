@@ -3,11 +3,10 @@
  * and is copyright it's respective owner.
  */
 
-(function(){
-  // get the canvas, 2d context, paragraph for data and set the radius
-  var canvas = document.getElementsByTagName('canvas')[0],
-      ctx = canvas.getContext('2d'),
-      lastPosition, toolId;
+$(document).ready(function() {  // get the canvas, 2d context, paragraph for data and set the radius
+  var canvas = document.getElementsByTagName('canvas')[0];
+  var ctx = canvas.getContext('2d');
+  var lastPosition, toolId;
 
   // set the canvas to cover the screen
   //canvas.width = document.body.clientWidth;
@@ -66,5 +65,4 @@
 
   // we have to enable gestures so that the device knows to send them through the websocket
   Leap.loop({ enableGestures: true }, draw);
-})();
-
+});
