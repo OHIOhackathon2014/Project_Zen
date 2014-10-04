@@ -8,6 +8,7 @@
 #include <platform.h>
 #include <xs1.h>
 #include <timer.h>
+#include "uart_rx.h"
 
 port p = XS1_PORT_1A;
 
