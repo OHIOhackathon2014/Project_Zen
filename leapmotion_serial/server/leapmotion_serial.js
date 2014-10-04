@@ -10,10 +10,10 @@ Meteor.startup(function () {
 			console.log("Serial port open");
 			Meteor.methods({
 				writeData: function(velocity, y) {
-					var byte = 196 * (velocity === 0 ? 0 : 1) + y * 32 + (velocity < 0 ? 0 : 1) * 16 + Math.abs(velocity);
-					var byteChar = String.fromCharCode(byte);
-					console.log(byteChar);
-					arduino.write(byteChar);
+					var byte = [196 * (velocity === 0 ? 0 : 1) + y * 32 + (velocity < 0 ? 0 : 1) * 16 + Math.abs(velocity)];
+					var buff = new Buffer(byte);
+					console.log(buff.toString('utf8'));
+					arduino.write(buff.toString('utf8'));
 				}
 			});
 		}	
