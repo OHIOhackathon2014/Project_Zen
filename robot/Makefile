@@ -9,7 +9,7 @@ TARGET = STARTKIT
 APP_NAME = robot
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = module_uart_fast_rx
+USED_MODULES = module_uart_fast_rx module_uart_fast_tx
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
