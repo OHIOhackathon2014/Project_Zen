@@ -4,14 +4,14 @@
 // and instead of digitalWrite, you should use the analogWrite command
 
 // Bit masks for commands
-#define AXIS 0x08
-#define ACTION 0x04
-#define DIRECTION_ALL 0x02
-#define DIRECTION_BACK 0x01
+#define FULL_STOP 0xc0
+#define AXIS_Y 0x20
+#define DIRECTION_POS 0x10
+#define SPEED_MASK 0x0f
 
 // Motor pins
-int motor_y[] = {2, 3};
-int motor_x[] = {7, 8};
+int motor_y[] = {2, 5};
+int motor_x[] = {6, 9};
 
 void setup() {
   Serial.begin(9600);
@@ -23,77 +23,84 @@ void setup() {
     pinMode(motor_x[i], OUTPUT);
   }
 
-  motor_stop_all();
+  digitalWrite(motor_x[0], LOW);
+  digitalWrite(motor_x[1], LOW);
+  digitalWrite(motor_y[0], LOW);
+  digitalWrite(motor_y[1], LOW);
 }
 
 void loop() {
   if (Serial.available()) {
-    uint8_t command[2];
-    Serial.readBytes(command, 2);
-    
-    if (command[1] & ACTION) {
-      // Stop  the entire Axis
-      if (command[1] & AXIS) {
-        motor_y_stop();
-      } else {
-        motor_x_stop();
-      }
+    uint8_t command;
+    Serial.readBytes(&command, 1);
+
+    // Determine whether to full stop motors or not
+    if (command & FULL_STOP) {
+      digitalWrite(motor_x[0], LOW);
+      digitalWrite(motor_x[1], LOW);
+      digitalWrite(motor_y[0], LOW);
+      digitalWrite(motor_y[1], LOW);
     } else {
-      // Move the axis in some direction
-      if (command[1] & DIRECTION_BACK) {
-        // Move axis backwards
-        if (command[1] & AXIS) {
-          motor_y_backwards(command[2]);
-        } else {
-          motory_x_backwards(command[2]);
-        }
-      } else {
-        // Move axis forward
-        if (command[1] & AXIS) {
-          motor_y_forwards(command[2]);
-        } else {
-          motory_x_forwards(command[2]);
-        }
+      uint8_t axis = 0;
+      if (command & AXIS_Y) {
+        axis = 1;
+      }
+
+      // Determine the direction (neg or pos)
+      uint8_t dir = 0;
+      if (command & DIRECTION_POS) {
+        dir = 1;
+      }
+
+      // Determine the speed
+      //TODO: Should be command & SPEED_MASK?
+      uint8_t spd = command & SPEED_MASK;
+      //TODO: This line creates a quadratic releationship between what should be linear speed values. It would be better to multiply by a constant.
+      spd = spd * 16;
+
+      // Write the motor speeds
+      switch (axis) {
+        case 0:
+          // X-axis
+          switch (dir) {
+            case 0:
+              // Negative direction
+              analogWrite(motor_x[0], LOW);
+              analogWrite(motor_x[1], spd);
+              break;
+            default:
+              // Positive direction
+              analogWrite(motor_x[0], spd);
+              analogWrite(motor_x[1], LOW);
+              break;
+          }
+          break;
+        default:
+          // Y-axis
+          switch (dir) {
+            case 0:
+              // Negative direction
+              analogWrite(motor_y[0], LOW);
+              analogWrite(motor_y[1], spd);
+              break;
+            default:
+              // Positive direction
+              analogWrite(motor_y[0], spd);
+              analogWrite(motor_y[1], LOW);
+              break;
+          }
+          break;
       }
     }
   } else {
-    motor_stop_all();
+    // If serial is not available, shut down to prevent damage.
+    digitalWrite(motor_x[0], LOW);
+    digitalWrite(motor_x[1], LOW);
+    digitalWrite(motor_y[0], LOW);
+    digitalWrite(motor_y[1], LOW);
   }
-}
-
-void motor_stop_all() {
-  motor_y_stop();
-  motor_x_stop();
+  // Wait 25 ms to allow settling
+  //TODO: If multiple messages are sent within a span of 25 milliseconds, this could be bad.
   delay(25);
-}
-
-void motor_y_stop() {
-  digitalWrite(motor_y[0], LOW);
-  digitalWrite(motor_y[1], LOW);
-}
-
-void motor_x_stop() {
-  digitalWrite(motor_x[0], LOW);
-  digitalWrite(motor_x[1], LOW);
-}
-
-void motor_y_forward() {
-  digitalWrite(motor_y[0], HIGH);
-  digitalWrite(motor_y[1], LOW);
-}
-
-void motor_y_backwards() {
-  digitalWrite(motor_y[0], LOW);
-  digitalWrite(motor_y[1], HIGH);
-}
-
-void motor_x_forward() {
-  digitalWrite(motor_y[0], HIGH);
-  digitalWrite(motor_y[1], LOW);
-}
-
-void motor_x_backwards() {
-  digitalWrite(motor_y[0], LOW);
-  digitalWrite(motor_y[1], HIGH);
 }
 
