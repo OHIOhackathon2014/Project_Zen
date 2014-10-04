@@ -10,8 +10,8 @@
 #define SPEED_MASK 0x0f
 
 // Motor pins
-int motor_y[] = {2, 5};
-int motor_x[] = {6, 9};
+int motor_y[] = {3, 5};
+int motor_x[] = {10, 11};
 
 void setup() {
   Serial.begin(9600);
@@ -27,15 +27,20 @@ void setup() {
   digitalWrite(motor_x[1], LOW);
   digitalWrite(motor_y[0], LOW);
   digitalWrite(motor_y[1], LOW);
+  
+  while (!Serial.available());
+  Serial.println("Starting Serial Communication");
 }
 
 void loop() {
   if (Serial.available()) {
     uint8_t command;
     Serial.readBytes(&command, 1);
+    Serial.println(command, BIN);
 
     // Determine whether to full stop motors or not
     if (command & FULL_STOP) {
+      Serial.println("Full stop");
       digitalWrite(motor_x[0], LOW);
       digitalWrite(motor_x[1], LOW);
       digitalWrite(motor_y[0], LOW);
@@ -45,7 +50,6 @@ void loop() {
       if (command & AXIS_Y) {
         axis = 1;
       }
-
       // Determine the direction (neg or pos)
       uint8_t dir = 0;
       if (command & DIRECTION_POS) {
@@ -56,7 +60,11 @@ void loop() {
       //TODO: Should be command & SPEED_MASK?
       uint8_t spd = command & SPEED_MASK;
       //TODO: This line creates a quadratic releationship between what should be linear speed values. It would be better to multiply by a constant.
-      spd = spd * 16;
+      if (spd == 16) {
+        spd = 256;
+      } else {
+        spd = spd * 16;
+      }
 
       // Write the motor speeds
       switch (axis) {
@@ -65,39 +73,33 @@ void loop() {
           switch (dir) {
             case 0:
               // Negative direction
-              analogWrite(motor_x[0], LOW);
               analogWrite(motor_x[1], spd);
+              digitalWrite(motor_x[1], HIGH);
               break;
-            default:
+            case 1:
               // Positive direction
               analogWrite(motor_x[0], spd);
-              analogWrite(motor_x[1], LOW);
+              digitalWrite(motor_x[1], LOW);
               break;
           }
           break;
-        default:
+        case 1:
           // Y-axis
           switch (dir) {
             case 0:
               // Negative direction
-              analogWrite(motor_y[0], LOW);
               analogWrite(motor_y[1], spd);
+              digitalWrite(motor_y[1], HIGH);
               break;
-            default:
+            case 1:
               // Positive direction
               analogWrite(motor_y[0], spd);
-              analogWrite(motor_y[1], LOW);
+              digitalWrite(motor_y[1], LOW);
               break;
           }
           break;
       }
     }
-  } else {
-    // If serial is not available, shut down to prevent damage.
-    digitalWrite(motor_x[0], LOW);
-    digitalWrite(motor_x[1], LOW);
-    digitalWrite(motor_y[0], LOW);
-    digitalWrite(motor_y[1], LOW);
   }
   // Wait 25 ms to allow settling
   //TODO: If multiple messages are sent within a span of 25 milliseconds, this could be bad.
