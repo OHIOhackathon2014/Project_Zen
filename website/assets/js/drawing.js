@@ -28,7 +28,7 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
         // we take the position of its tip
         currentPosition = tool.tipPosition;
         // and if it is closer to the screen than the device
-        if(currentPosition.z < 0){
+        if(currentPosition[2] < 0){
           // we draw a line between the current position and the previous one
           ctx.beginPath();
           ctx.moveTo(lastPosition.x, -lastPosition.y);
