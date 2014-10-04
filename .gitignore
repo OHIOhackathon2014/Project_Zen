@@ -30,3 +30,6 @@
 # Eclipse directories
 .metadata
 
+# FFmpeg create fiels
+*.ffm
+
