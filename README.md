@@ -1,9 +1,9 @@
 Project_Zen
 ===========
 
-->Innovative Robots<-
+-> Innovative Robots <-
 
-->Data that flows like the sands<-
+-> Data that flows like the sands <-
 
-->Truely this is zen<-
+-> Truely this is zen <-
 
