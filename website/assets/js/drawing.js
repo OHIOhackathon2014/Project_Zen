@@ -5,34 +5,23 @@
 
 $(document).ready(function() {  // get the canvas, 2d context, paragraph for data and set the radius
   var canvas = document.getElementsByTagName('canvas')[0];
-  var ctx = canvas.getContext('2d');
-  var lastPosition, toolId;
-
-  // A factor to shift our y down
-  var yadj = 1.5;
+  var toolId;
 
   // # previous points to store
-  window.point_history_size = 10;
-  window.point_history = [];
-  for (var hist_iter = 0; hist_iter < window.point_history_size; hist_iter++) {
-    window.point_history.push({x: null, y: null});
+  var point_history_size = 20;
+  var point_history = [];
+  for (var hist_iter = 0; hist_iter < point_history_size; hist_iter++) {
+    point_history.push({x: null, y: null});
   }
 
-
-  // move the context co-ordinates to the bottom middle of the screen
-  ctx.translate(canvas.width/2, canvas.height);
-
-  //ctx.strokeStyle = "rgba(255,0,0,0.9)";
-  ctx.lineWidth = 2;
+  var last_update = (new Date()).getTime();
 
   function draw(frame){
-    // White gradient for the dragging
-    var gradient = ctx.createLinearGradient(0, 0, 0, 50);
-    gradient.addColorStop(0, "green");
-    gradient.addColorStop(1, "white");
 
     var tool, currentPosition, i, len;
+    var ctx = canvas.getContext('2d');
     if(toolId !== undefined){
+      last_update = (new Date()).getTime();
       // we have a current toolId, so we should look for it in this frame
       tool = frame.tool(toolId);
       // if the tool is valid, i.e. it is still in the frame
@@ -44,47 +33,50 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
           currentPosition.y -= 75;
           //currentPosition.y *= yadj;
 
-          window.point_history.push({x: currentPosition.x, y: currentPosition.y});
-          console.log({x: currentPosition.x, y: currentPosition.y});
-          console.log(window.point_history);
-          window.point_history.shift();
+          point_history.push({x: currentPosition.x, y: currentPosition.y});
+          point_history.shift();
 
           // find the last null, if any
           var lastnull;
 
-          for (var lastnull = window.point_history_size - 1; lastnull > 0; lastnull--) {
-            if (window.point_history[lastnull].x == null || window.point_history[lastnull].y == null) {
+          for (var lastnull = point_history_size - 1; lastnull > 0; lastnull--) {
+            if (point_history[lastnull].x == null || point_history[lastnull].y == null) {
               break;
             }
           }
 
-          console.log(lastnull);
-          console.log(window.point_history);
-
           var opacity;
 
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // move the context co-ordinates to the bottom middle of the screen
+          ctx.translate(canvas.width/2, canvas.height);
+
           // iterate through the history and draw our line
-          for (var iter = lastnull; iter < (window.point_history_size - 1); iter++) {
-            opacity = iter / (window.point_history_size - 1 - lastnull);
+          for (var iter = lastnull; iter < (point_history_size - 1); iter++) {
+            //opacity = iter / (point_history_size - 1 - lastnull);
+            ctx.lineWidth = ((iter + .5) / (point_history_size - lastnull)) * 7;
             ctx.beginPath();
-            ctx.moveTo(window.point_history[iter].x, -window.point_history[iter].y);
-            ctx.lineTo(window.point_history[iter+1].x, -window.point_history[iter+1].y);
-            ctx.strokeStyle="white";
+            ctx.moveTo(point_history[iter].x, -point_history[iter].y);
+            ctx.lineTo(point_history[iter+1].x, -point_history[iter+1].y);
+            ctx.strokeStyle="#7DE8FF";
             ctx.stroke();
           }
 
-          // we draw a line between the current position and the previous one
-//          ctx.beginPath();
-//          ctx.moveTo(lastPosition.x, -lastPosition.y);
-//          ctx.lineTo(currentPosition.x, -currentPosition.y);
-//          ctx.stroke();
+          if (point_history[point_history_size - 1].x !== null) {
+            console.log("Drawing circle!");
+            ctx.arc(point_history[point_history_size - 1].x,
+              -point_history[point_history_size - 1].y,
+              4, 2 * Math.PI, false);
+
+            ctx.fillStyle = "#7DE8FF";
+            ctx.fill();
+          }
         }
-        // finally, we update the last position
-        lastPosition = currentPosition;
       }else{
         // the tool is not valid, let's find a new one.
         toolId = undefined;
-        lastPosition = undefined;
       }
     }else{
       // we do not have a tool right now so we should look for one
@@ -92,21 +84,19 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
         // if the frame has some tools in it, we choose the first one
         tool = frame.tools[0];
         toolId = tool.id;
-        lastPosition = tool.tipPosition;
-      }
-      // we should also look for a gesture to see if we should clear the drawing
-      if(frame.gestures.length > 0){
-        // we check each gesture in the frame
-        for(i=0, len=frame.gestures.length; i<len; i++){
-          // and if one is the end of a swipe, we clear the canvas
-          if(frame.gestures[i].type === 'swipe' && frame.gestures[i].state === 'stop'){
-            ctx.clearRect(-canvas.width/2,-canvas.height,canvas.width,canvas.height);
-          }
-        }
       }
     }
   }
 
-  // we have to enable gestures so that the device knows to send them through the websocket
-  Leap.loop({ enableGestures: true }, draw);
+  window.setInterval(function() {
+    console.log(last_update);
+    console.log((new Date()).getTime());
+    if (last_update + 200 < (new Date()).getTime()) {
+      point_history.shift();
+      point_history.push({x: null, y: null});
+      canvas.width = canvas.width;
+    }
+  }, 500);
+
+  Leap.loop({}, draw);
 });
