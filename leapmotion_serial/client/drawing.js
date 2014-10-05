@@ -16,9 +16,15 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
 
   var last_update = (new Date()).getTime();
 
+  var tool, currentPosition, i, len;
+	Meteor.setInterval(function() {
+		if (currentPosition) {
+			Meteor.call('logPosition', currentPosition.x, currentPosition.y);
+		}
+	}, 500);
+
   function draw(frame){
 
-    var tool, currentPosition, i, len;
     var ctx = canvas.getContext('2d');
     if(toolId !== undefined){
       last_update = (new Date()).getTime();
@@ -65,7 +71,6 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
           }
 
           if (point_history[point_history_size - 1].x !== null) {
-            console.log("Drawing circle!");
             ctx.arc(point_history[point_history_size - 1].x,
               -point_history[point_history_size - 1].y,
               4, 2 * Math.PI, false);
@@ -89,8 +94,6 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
   }
 
   window.setInterval(function() {
-    console.log(last_update);
-    console.log((new Date()).getTime());
     if (last_update + 200 < (new Date()).getTime()) {
       point_history.shift();
       point_history.push({x: null, y: null});

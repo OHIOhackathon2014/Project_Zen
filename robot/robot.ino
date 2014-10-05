@@ -3,21 +3,11 @@
 // if you need PWM, just use the PWM outputs on the Arduino
 // and instead of digitalWrite, you should use the analogWrite command
 
-#include <Servo.h>
-
-Servo servo;
-int pos = 0;
-
-// Servo degree increment
-#define SERVO_INC 3
-
 // Bit masks for commands
 #define FULL_STOP 0xc0
 #define AXIS_Y 0x20
 #define DIRECTION_POS 0x10
 #define SPEED_MASK 0x0f
-#define SERVO_CTRL 0x80
-#define SERVO_MASK 0x3f
 
 // Motor pins
 int motor_y[] = {3, 5};
@@ -25,9 +15,6 @@ int motor_x[] = {10, 11};
 
 void setup() {
   Serial.begin(9600);
-  
-  // Use pin 7 for the servo
-  servo.attach(7);
 
   // Setup motors
   int i;
@@ -40,6 +27,9 @@ void setup() {
   digitalWrite(motor_x[1], LOW);
   digitalWrite(motor_y[0], LOW);
   digitalWrite(motor_y[1], LOW);
+  
+  while (!Serial.available());
+  Serial.println("Starting Serial Communication");
 }
 
 void loop() {
@@ -48,21 +38,13 @@ void loop() {
     Serial.readBytes(&command, 1);
     Serial.println(command, BIN);
 
-    // Determine whether to full stop motors, servo command, or move command
+    // Determine whether to full stop motors or not
     if (command & FULL_STOP) {
       Serial.println("Full stop");
       digitalWrite(motor_x[0], LOW);
       digitalWrite(motor_x[1], LOW);
       digitalWrite(motor_y[0], LOW);
       digitalWrite(motor_y[1], LOW);
-    } else if (command & SERVO_CONTROL) {
-      uint8_t angle = command & SERVO_MASK;
-      if (angle > 60) {
-        angle = 60;
-      }
-      
-      int real_angle = angle * SERVO_INC;
-      servo.write(real_angle);
     } else {
       uint8_t axis = 0;
       if (command & AXIS_Y) {
@@ -121,4 +103,3 @@ void loop() {
   //TODO: If multiple messages are sent within a span of 25 milliseconds, this could be bad.
   delay(25);
 }
-
