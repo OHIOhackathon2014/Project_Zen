@@ -12,6 +12,23 @@ joking discussing terrible and useless ideas for hackathon projects.
 Project_Zen consists of several main parts, the sum of which is the remote
 management of a physical Zen garden.
 
+Hardware
+--------
+Our hardware consits of a common wooden frame, supsended by water bottles since
+we had a lot of them, they were just the right height, and when filled provided
+a good amount of weight. The rake is driven by two sets of motors and tracks
+ripped out of some printers we got at a thrift store, providing x and y motion.
+The rake can also be rotated via a servo, but unfortunately we didn't have time
+to implement this in software.
+
+Technologies Used
+-----------------
+- JavaScript
+    - Meteor (Node.js), LeapJS
+- Arduino
+- FFmpeg
+    - FFserver
+
 Video Feedback
 --------------
 The first part of remotely managing a Zen garden is being able to actually look
@@ -30,13 +47,3 @@ Arduino Controller
 ------------------
 This project uses an Arduino Uno to drive the motors. You can see the code in
 `./robot`.
-
-AUTHORS
-leapmotion_serial
-libraries
-LICENSE
-README.md
-robot
-webcam
-website
-
