@@ -1,6 +1,6 @@
 /*
- * This code is taken from https://github.com/philnash/leap-motion-experiments,
- * and is copyright it's respective owner.
+ * This code is adpated from
+ * https://github.com/philnash/leap-motion-experiments
  */
 
 $(document).ready(function() {  // get the canvas, 2d context, paragraph for data and set the radius
@@ -8,17 +8,29 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
   var ctx = canvas.getContext('2d');
   var lastPosition, toolId;
 
-  // set the canvas to cover the screen
-  //canvas.width = document.body.clientWidth;
-  //canvas.height = document.body.clientHeight;
+  // A factor to shift our y down
+  var yadj = 1.5;
+
+  // # previous points to store
+  window.point_history_size = 10;
+  window.point_history = [];
+  for (var hist_iter = 0; hist_iter < window.point_history_size; hist_iter++) {
+    window.point_history.push({x: null, y: null});
+  }
+
 
   // move the context co-ordinates to the bottom middle of the screen
   ctx.translate(canvas.width/2, canvas.height);
 
-  ctx.strokeStyle = "rgba(255,0,0,0.9)";
+  //ctx.strokeStyle = "rgba(255,0,0,0.9)";
   ctx.lineWidth = 2;
 
   function draw(frame){
+    // White gradient for the dragging
+    var gradient = ctx.createLinearGradient(0, 0, 0, 50);
+    gradient.addColorStop(0, "green");
+    gradient.addColorStop(1, "white");
+
     var tool, currentPosition, i, len;
     if(toolId !== undefined){
       // we have a current toolId, so we should look for it in this frame
@@ -28,12 +40,44 @@ $(document).ready(function() {  // get the canvas, 2d context, paragraph for dat
         // we take the position of its tip
         currentPosition = tool.tipPosition;
         // and if it is closer to the screen than the device
-        if(currentPosition[2] < 0){
+        if(currentPosition.z < 0){
+          currentPosition.y -= 75;
+          //currentPosition.y *= yadj;
+
+          window.point_history.push({x: currentPosition.x, y: currentPosition.y});
+          console.log({x: currentPosition.x, y: currentPosition.y});
+          console.log(window.point_history);
+          window.point_history.shift();
+
+          // find the last null, if any
+          var lastnull;
+
+          for (var lastnull = window.point_history_size - 1; lastnull > 0; lastnull--) {
+            if (window.point_history[lastnull].x == null || window.point_history[lastnull].y == null) {
+              break;
+            }
+          }
+
+          console.log(lastnull);
+          console.log(window.point_history);
+
+          var opacity;
+
+          // iterate through the history and draw our line
+          for (var iter = lastnull; iter < (window.point_history_size - 1); iter++) {
+            opacity = iter / (window.point_history_size - 1 - lastnull);
+            ctx.beginPath();
+            ctx.moveTo(window.point_history[iter].x, -window.point_history[iter].y);
+            ctx.lineTo(window.point_history[iter+1].x, -window.point_history[iter+1].y);
+            ctx.strokeStyle="white";
+            ctx.stroke();
+          }
+
           // we draw a line between the current position and the previous one
-          ctx.beginPath();
-          ctx.moveTo(lastPosition.x, -lastPosition.y);
-          ctx.lineTo(currentPosition.x, -currentPosition.y);
-          ctx.stroke();
+//          ctx.beginPath();
+//          ctx.moveTo(lastPosition.x, -lastPosition.y);
+//          ctx.lineTo(currentPosition.x, -currentPosition.y);
+//          ctx.stroke();
         }
         // finally, we update the last position
         lastPosition = currentPosition;
