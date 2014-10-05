@@ -1,26 +1,27 @@
 /*
- * This code is taken from https://github.com/philnash/leap-motion-experiments,
- * and is copyright it's respective owner.
+ * This code is adpated from
+ * https://github.com/philnash/leap-motion-experiments
  */
 
-Meteor.startup(function() {  // get the canvas, 2d context, paragraph for data and set the radius
+$(document).ready(function() {  // get the canvas, 2d context, paragraph for data and set the radius
   var canvas = document.getElementsByTagName('canvas')[0];
-  var ctx = canvas.getContext('2d');
-  var lastPosition, toolId;
+  var toolId;
 
-  // set the canvas to cover the screen
-  //canvas.width = document.body.clientWidth;
-  //canvas.height = document.body.clientHeight;
+  // # previous points to store
+  var point_history_size = 20;
+  var point_history = [];
+  for (var hist_iter = 0; hist_iter < point_history_size; hist_iter++) {
+    point_history.push({x: null, y: null});
+  }
 
-  // move the context co-ordinates to the bottom middle of the screen
-  ctx.translate(canvas.width/2, canvas.height);
-
-  ctx.strokeStyle = "rgba(255,0,0,0.9)";
-  ctx.lineWidth = 2;
+  var last_update = (new Date()).getTime();
 
   function draw(frame){
+
     var tool, currentPosition, i, len;
+    var ctx = canvas.getContext('2d');
     if(toolId !== undefined){
+      last_update = (new Date()).getTime();
       // we have a current toolId, so we should look for it in this frame
       tool = frame.tool(toolId);
       // if the tool is valid, i.e. it is still in the frame
@@ -29,18 +30,53 @@ Meteor.startup(function() {  // get the canvas, 2d context, paragraph for data a
         currentPosition = tool.tipPosition;
         // and if it is closer to the screen than the device
         if(currentPosition.z < 0){
-          // we draw a line between the current position and the previous one
-          ctx.beginPath();
-          ctx.moveTo(lastPosition.x, -lastPosition.y);
-          ctx.lineTo(currentPosition.x, -currentPosition.y);
-          ctx.stroke();
+          currentPosition.y -= 75;
+          //currentPosition.y *= yadj;
+
+          point_history.push({x: currentPosition.x, y: currentPosition.y});
+          point_history.shift();
+
+          // find the last null, if any
+          var lastnull;
+
+          for (var lastnull = point_history_size - 1; lastnull > 0; lastnull--) {
+            if (point_history[lastnull].x == null || point_history[lastnull].y == null) {
+              break;
+            }
+          }
+
+          var opacity;
+
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // move the context co-ordinates to the bottom middle of the screen
+          ctx.translate(canvas.width/2, canvas.height);
+
+          // iterate through the history and draw our line
+          for (var iter = lastnull; iter < (point_history_size - 1); iter++) {
+            //opacity = iter / (point_history_size - 1 - lastnull);
+            ctx.lineWidth = ((iter + .5) / (point_history_size - lastnull)) * 7;
+            ctx.beginPath();
+            ctx.moveTo(point_history[iter].x, -point_history[iter].y);
+            ctx.lineTo(point_history[iter+1].x, -point_history[iter+1].y);
+            ctx.strokeStyle="#7DE8FF";
+            ctx.stroke();
+          }
+
+          if (point_history[point_history_size - 1].x !== null) {
+            console.log("Drawing circle!");
+            ctx.arc(point_history[point_history_size - 1].x,
+              -point_history[point_history_size - 1].y,
+              4, 2 * Math.PI, false);
+
+            ctx.fillStyle = "#7DE8FF";
+            ctx.fill();
+          }
         }
-        // finally, we update the last position
-        lastPosition = currentPosition;
       }else{
         // the tool is not valid, let's find a new one.
         toolId = undefined;
-        lastPosition = undefined;
       }
     }else{
       // we do not have a tool right now so we should look for one
@@ -48,21 +84,19 @@ Meteor.startup(function() {  // get the canvas, 2d context, paragraph for data a
         // if the frame has some tools in it, we choose the first one
         tool = frame.tools[0];
         toolId = tool.id;
-        lastPosition = tool.tipPosition;
-      }
-      // we should also look for a gesture to see if we should clear the drawing
-      if(frame.gestures.length > 0){
-        // we check each gesture in the frame
-        for(i=0, len=frame.gestures.length; i<len; i++){
-          // and if one is the end of a swipe, we clear the canvas
-          if(frame.gestures[i].type === 'swipe' && frame.gestures[i].state === 'stop'){
-            ctx.clearRect(-canvas.width/2,-canvas.height,canvas.width,canvas.height);
-          }
-        }
       }
     }
   }
 
-  // we have to enable gestures so that the device knows to send them through the websocket
-  Leap.loop({ enableGestures: true }, draw);
+  window.setInterval(function() {
+    console.log(last_update);
+    console.log((new Date()).getTime());
+    if (last_update + 200 < (new Date()).getTime()) {
+      point_history.shift();
+      point_history.push({x: null, y: null});
+      canvas.width = canvas.width;
+    }
+  }, 500);
+
+  Leap.loop({}, draw);
 });
