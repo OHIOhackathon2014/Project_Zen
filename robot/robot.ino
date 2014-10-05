@@ -55,7 +55,7 @@ void loop() {
       digitalWrite(motor_x[1], LOW);
       digitalWrite(motor_y[0], LOW);
       digitalWrite(motor_y[1], LOW);
-    } else if (command & SERVO_CONTROL) {
+    } else if (command & SERVO_CTRL) {
       uint8_t angle = command & SERVO_MASK;
       if (angle > 60) {
         angle = 60;
