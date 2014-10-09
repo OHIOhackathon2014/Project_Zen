@@ -14,7 +14,7 @@ management of a physical Zen garden.
 
 Hardware
 --------
-Our hardware consits of a common wooden frame, supsended by water bottles since
+Our hardware consits of a common wooden frame, propped up by water bottles since
 we had a lot of them, they were just the right height, and when filled provided
 a good amount of weight. The rake is driven by two sets of motors and tracks
 ripped out of some printers we got at a thrift store, providing x and y motion.
